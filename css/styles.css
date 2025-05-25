@@ -1,0 +1,385 @@
+:root {
+  --primary-color: #4285f4;
+  --primary-dark: #3367d6;
+  --secondary-color: #34a853;
+  --error-color: #ea4335;
+  --warning-color: #fbbc05;
+  --text-color: #202124;
+  --text-secondary: #5f6368;
+  --background-color: #f8f9fa;
+  --card-background: #ffffff;
+  --border-color: #dadce0;
+  --shadow-color: rgba(60, 64, 67, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+header p {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.card {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px var(--shadow-color);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-color);
+}
+
+.input-group {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+input[type="url"], input[type="text"] {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+input[type="url"] {
+  border-radius: 4px 0 0 4px;
+}
+
+input[type="url"]:focus, input[type="text"]:focus {
+  border-color: var(--primary-color);
+}
+
+button {
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+#extract-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0 1.5rem;
+  border-radius: 0 4px 4px 0;
+  font-size: 1rem;
+}
+
+#extract-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+.hint, .api-hint {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.api-hint a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.api-hint a:hover {
+  text-decoration: underline;
+}
+
+.api-key-section {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+}
+
+.api-key-container {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f1f3f4;
+  border-radius: 4px;
+}
+
+.api-key-container label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+details summary {
+  cursor: pointer;
+  color: var(--primary-color);
+  font-weight: 500;
+  padding: 0.5rem 0;
+}
+
+details summary:hover {
+  text-decoration: underline;
+}
+
+.progress-container {
+  margin: 1.5rem 0;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  background-color: var(--primary-color);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.progress-details {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.progress-details p {
+  margin-bottom: 0.5rem;
+}
+
+#current-video-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+}
+
+.results-info {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-around;
+  margin: 2rem 0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-item i {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.stat-item span:first-of-type {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.download-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.download-btn {
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  border: none;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.download-btn.excel {
+  background-color: #217346;
+  color: white;
+}
+
+.download-btn.word {
+  background-color: #2b579a;
+  color: white;
+}
+
+.download-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.error-card {
+  border-left: 4px solid var(--error-color);
+  text-align: center;
+}
+
+.error-card h2 {
+  color: var(--error-color);
+}
+
+#error-message {
+  margin-bottom: 1.5rem;
+}
+
+.try-again-btn {
+  background-color: var(--error-color);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.try-again-btn:hover {
+  background-color: #d93025;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Modal styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.close-modal {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.close-modal:hover {
+  color: var(--text-color);
+}
+
+.modal-body {
+  margin-top: 1.5rem;
+}
+
+.modal-body ol, .modal-body ul {
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-body li {
+  margin-bottom: 0.5rem;
+}
+
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+footer a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .input-group {
+    flex-direction: column;
+  }
+  
+  input[type="url"] {
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+  }
+  
+  #extract-btn {
+    border-radius: 4px;
+    padding: 0.8rem;
+  }
+  
+  .download-buttons {
+    flex-direction: column;
+  }
+  
+  .download-btn {
+    width: 100%;
+  }
+  
+  .stats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
