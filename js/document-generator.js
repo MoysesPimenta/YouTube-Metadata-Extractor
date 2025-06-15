@@ -119,7 +119,11 @@ class DocumentGenerator {
 
       const { Document, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, Packer, HeadingLevel } = this.docx;
 
-      const doc = new Document();
+      const doc = new Document({
+  creator: "Lavvi",
+  title: "Comprovação de Dados - Playlist YouTube",
+  description: "Documento gerado automaticamente com os dados da playlist."
+});
 
       doc.addSection({ children: [
         new Paragraph({
