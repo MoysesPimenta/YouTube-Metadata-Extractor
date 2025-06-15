@@ -93,16 +93,13 @@ class DocumentGenerator {
     return { blob, filename: 'playlist_data.csv' };
   }
 
-  async generateWordDocument(videos, screenshots) {
+    async generateWordDocument(videos, screenshots) {
     if (!videos || videos.length === 0 || !screenshots || screenshots.length === 0) {
       throw new Error('Nenhum dado disponível para gerar o documento.');
     }
-    // Fallback: generate HTML and save as .doc for Word compatibility
+    // Generate HTML content and provide as .doc for Word
     const htmlDoc = this.generateHtmlDocument(videos, screenshots);
-    // Convert HTML blob to Word-compatible blob
-    const arrayBuffer = await htmlDoc.blob.arrayBuffer();
-    const wordBlob = new Blob([arrayBuffer], { type: 'application/msword' });
-    return { blob: wordBlob, filename: 'comprovacao_videos.doc' };
+    return { blob: htmlDoc.blob, filename: 'comprovacao_videos.doc' };
   }
 
   async getImageDataFromUrl(url) {
@@ -136,4 +133,3 @@ class DocumentGenerator {
     return { blob, filename: 'comprovacao_videos.html' };
   }
 }
-
