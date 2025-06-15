@@ -97,64 +97,12 @@ class DocumentGenerator {
     if (!videos || videos.length === 0 || !screenshots || screenshots.length === 0) {
       throw new Error('Nenhum dado disponível para gerar o documento.');
     }
-    if (!this.docxLoaded) {
-      console.warn('DOCX library not available, falling back to HTML');
-      return this.generateHtmlDocument(videos, screenshots);
-    }
-
-    const { Document, Paragraph, Table, TableRow, TableCell, ImageRun, Packer, HeadingLevel, AlignmentType } = this.docx;
-
-    // Build contents
-    const children = [];
-    // Title
-    children.push(
-      new Paragraph({
-        text: 'Comprovação de Dados - Playlist YouTube',
-        heading: HeadingLevel.HEADING_1,
-        alignment: AlignmentType.CENTER
-      })
-    );
-
-    for (let i = 0; i < videos.length; i++) {
-      const video = videos[i];
-      const screenshot = screenshots[i];
-      let imageData = null;
-      try {
-        imageData = await this.getImageDataFromUrl(screenshot.imageUrl);
-      } catch {
-        // skip image if fetch fails
-      }
-
-      children.push(
-        new Paragraph({ text: `Vídeo ${i + 1}: ${video.title}`, heading: HeadingLevel.HEADING_2 }),
-        new Table({
-          rows: [
-            [ 'Nome do Episódio:', video.title ],
-            [ 'Duração:', video.duration ],
-            [ 'Views:', video.views.toLocaleString() ],
-            [ 'Likes:', video.likes.toLocaleString() ],
-            [ 'Link:', `https://www.youtube.com/watch?v=${video.videoId}` ],
-            [ 'Data de Publicação:', new Date(video.publishedDate).toLocaleDateString() ]
-          ].map(([label, value]) => new TableRow({ children: [
-            new TableCell({ children: [ new Paragraph(label) ] }),
-            new TableCell({ children: [ new Paragraph(String(value)) ] })
-          ] }))
-        }),
-        ...(imageData ? [ new Paragraph({ children: [ new ImageRun({ data: imageData, transformation: { width: 600, height: 350 } }) ] }) ] : [])
-      );
-    }
-
-    // Create document with populated sections
-    const doc = new Document({
-      creator: 'Lavvi',
-      title: 'Comprovação de Dados - Playlist YouTube',
-      description: 'Documento gerado automaticamente com os dados da playlist.',
-      sections: [ { properties: {}, children } ]
-    });
-
-    // Generate Blob
-    const blob = await Packer.toBlob(doc);
-    return { blob, filename: 'comprovacao_videos.docx' };
+    // Fallback: generate HTML and save as .doc for Word compatibility
+    const htmlDoc = this.generateHtmlDocument(videos, screenshots);
+    // Convert HTML blob to Word-compatible blob
+    const arrayBuffer = await htmlDoc.blob.arrayBuffer();
+    const wordBlob = new Blob([arrayBuffer], { type: 'application/msword' });
+    return { blob: wordBlob, filename: 'comprovacao_videos.doc' };
   }
 
   async getImageDataFromUrl(url) {
@@ -188,3 +136,4 @@ class DocumentGenerator {
     return { blob, filename: 'comprovacao_videos.html' };
   }
 }
+
