@@ -122,8 +122,8 @@ class DocumentGenerator {
       const doc = new Document({
   creator: "Lavvi",
   title: "Comprovação de Dados - Playlist YouTube",
-  description: "Documento gerado automaticamente com os dados da playlist.",
-  sections: [] });
+  description: "Documento gerado automaticamente com os dados da playlist."
+});
 
       
 
@@ -132,7 +132,7 @@ class DocumentGenerator {
         const screenshot = screenshots[i];
         const imageData = await this.getImageDataFromUrl(screenshot.imageUrl);
 
-        doc.sections.push({ properties: {}, children: [
+        doc.addSection({ properties: {}, children: [
             new Paragraph({
               text: `Vídeo ${i + 1}: ${video.title}`,
               heading: HeadingLevel.HEADING_2
