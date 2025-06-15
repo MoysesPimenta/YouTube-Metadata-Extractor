@@ -127,57 +127,60 @@ class DocumentGenerator {
 
       
 
-      for (let i = 0; i < videos.length; i++) {
-        const video = videos[i];
-        const screenshot = screenshots[i];
-        const imageData = await this.getImageDataFromUrl(screenshot.imageUrl);
+      const children = [];
 
-        doc.addSection({ properties: {}, children: [
-            new Paragraph({
-              text: `Vídeo ${i + 1}: ${video.title}`,
-              heading: HeadingLevel.HEADING_2
-            }),
-            new Table({
-              rows: [
-                new TableRow({ children: [
-                  new TableCell({ children: [new Paragraph('Nome do Episódio:')] }),
-                  new TableCell({ children: [new Paragraph(video.title)] })
-                ] }),
-                new TableRow({ children: [
-                  new TableCell({ children: [new Paragraph('Duração:')] }),
-                  new TableCell({ children: [new Paragraph(video.duration)] })
-                ] }),
-                new TableRow({ children: [
-                  new TableCell({ children: [new Paragraph('Views:')] }),
-                  new TableCell({ children: [new Paragraph(video.views.toLocaleString())] })
-                ] }),
-                new TableRow({ children: [
-                  new TableCell({ children: [new Paragraph('Likes:')] }),
-                  new TableCell({ children: [new Paragraph(video.likes.toLocaleString())] })
-                ] }),
-                new TableRow({ children: [
-                  new TableCell({ children: [new Paragraph('Link:')] }),
-                  new TableCell({ children: [new Paragraph(`https://www.youtube.com/watch?v=${video.videoId}`)] })
-                ] }),
-                new TableRow({ children: [
-                  new TableCell({ children: [new Paragraph('Data de Publicação:')] }),
-                  new TableCell({ children: [new Paragraph(new Date(video.publishedDate).toLocaleDateString())] })
-                ] })
-              ]
-            }),
-            new Paragraph({
-              children: [
-                new ImageRun({
-                  data: imageData,
-                  transformation: { width: 600, height: 350 }
-                })
-              ]
-            })
-          ]
-        });
-      }
+for (let i = 0; i < videos.length; i++) {
+  const video = videos[i];
+  const screenshot = screenshots[i];
+  const imageData = await this.getImageDataFromUrl(screenshot.imageUrl);
 
-      const buffer = await Packer.toBuffer(doc);
+  children.push(
+    new Paragraph({
+      text: `Vídeo ${i + 1}: ${video.title}`,
+      heading: HeadingLevel.HEADING_2
+    }),
+    new Table({
+      rows: [
+        new TableRow({ children: [
+          new TableCell({ children: [new Paragraph('Nome do Episódio:')] }),
+          new TableCell({ children: [new Paragraph(video.title)] })
+        ] }),
+        new TableRow({ children: [
+          new TableCell({ children: [new Paragraph('Duração:')] }),
+          new TableCell({ children: [new Paragraph(video.duration)] })
+        ] }),
+        new TableRow({ children: [
+          new TableCell({ children: [new Paragraph('Views:')] }),
+          new TableCell({ children: [new Paragraph(video.views.toLocaleString())] })
+        ] }),
+        new TableRow({ children: [
+          new TableCell({ children: [new Paragraph('Likes:')] }),
+          new TableCell({ children: [new Paragraph(video.likes.toLocaleString())] })
+        ] }),
+        new TableRow({ children: [
+          new TableCell({ children: [new Paragraph('Link:')] }),
+          new TableCell({ children: [new Paragraph(`https://www.youtube.com/watch?v=${video.videoId}`)] })
+        ] }),
+        new TableRow({ children: [
+          new TableCell({ children: [new Paragraph('Data de Publicação:')] }),
+          new TableCell({ children: [new Paragraph(new Date(video.publishedDate).toLocaleDateString())] })
+        ] })
+      ]
+    }),
+    new Paragraph({
+      children: [
+        new ImageRun({
+          data: imageData,
+          transformation: { width: 600, height: 350 }
+        })
+      ]
+    })
+  );
+}
+
+doc.addSection({ properties: {}, children });
+
+const buffer = await Packer.toBuffer(doc);
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 
       return {
