@@ -1,3 +1,5 @@
+// File: js/app.js
+
 // Integration of UI with YouTube Extractor and Document Generator
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
@@ -12,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressPercentage = document.getElementById('progress-percentage');
     const progressStatus = document.getElementById('progress-status');
     const videosProcessed = document.getElementById('videos-processed');
-    const videosTotal = document.getElementById('videos-total');
+    const videosTotal = document.getElementById('total-videos');
     const currentVideoTitle = document.getElementById('current-video-title');
     const totalVideosSpan = document.getElementById('total-videos');
     const totalScreenshotsSpan = document.getElementById('total-screenshots');
@@ -47,13 +49,11 @@ document.addEventListener('DOMContentLoaded', function() {
     downloadWordBtn.addEventListener('click', handleWordDownload);
     tryAgainBtn.addEventListener('click', resetForm);
     
-    // Modal handling - FIXED VERSION
-    if (apiInstructionsLink) {
+    // Modal handling
+    if (apiInstructionsLink && apiModal) {
         apiInstructionsLink.addEventListener('click', function(e) {
             e.preventDefault();
-            if (apiModal) {
-                apiModal.style.display = 'flex';
-            }
+            apiModal.style.display = 'flex';
         });
     }
     
@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Close modal when clicking outside of it
     window.addEventListener('click', function(event) {
         if (event.target === apiModal) {
             apiModal.style.display = 'none';
@@ -124,16 +123,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Validate YouTube playlist URL - IMPROVED VERSION
+    // Validate YouTube playlist URL
     function isValidYouTubePlaylistUrl(url) {
-        // Expressão regular melhorada para aceitar parâmetros adicionais após o ID da playlist
         const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.*list=([a-zA-Z0-9_-]+)/;
         return regex.test(url);
     }
 
-    // Extract playlist ID from URL - IMPROVED VERSION
+    // Extract playlist ID from URL
     function extractPlaylistId(url) {
-        // Expressão regular para extrair apenas o ID da playlist, ignorando parâmetros adicionais
         const regex = /list=([a-zA-Z0-9_-]+)/;
         const match = url.match(regex);
         return match ? match[1] : null;
@@ -217,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
             progressStatus.textContent = 'Gerando documento com capturas...';
             
             // Generate Word document
-            const wordData = docGenerator.generateWordDocument(extractedData.videos, extractedData.screenshots);
+            const wordData = await docGenerator.generateWordDocument(extractedData.videos, extractedData.screenshots);
             
             // Create download link
             downloadFile(wordData.blob, wordData.filename);
