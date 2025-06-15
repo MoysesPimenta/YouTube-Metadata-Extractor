@@ -68,37 +68,26 @@ class DocumentGenerator {
     return { blob, filename: 'playlist_data.xlsx' };
   }
 
-  // DOCX generation with proper addSection usage
+  // DOCX generation using explicit sections array
   async generateWordDocument(videos) {
-    // Ensure library loaded
+    if (!videos || videos.length === 0) {
+      throw new Error('Nenhum dado disponível para gerar o documento.');
+    }
     if (!this.docx) {
       console.warn('DOCX library not loaded; falling back to HTML');
       return this.generateHtmlDocument(videos);
     }
 
     const {
-      Document,
-      Packer,
-      Paragraph,
-      Table,
-      TableRow,
-      TableCell,
-      BorderStyle,
-      AlignmentType,
-      HeadingLevel,
-      PageBreak,
-      ImageRun
+      Document, Packer, Paragraph, Table, TableRow, TableCell,
+      BorderStyle, AlignmentType, HeadingLevel, PageBreak, ImageRun
     } = this.docx;
 
-    // Create document
-    const doc = new Document({
-      creator: 'YouTube Playlist Extractor',
-      title: 'Comprovação de Dados - Playlist YouTube',
-      description: 'Dados extraídos de playlist do YouTube'
-    });
+    // Build an array of sections
+    const sections = [];
 
     // Title section
-    doc.addSection({
+    sections.push({
       properties: {},
       children: [
         new Paragraph({
@@ -109,16 +98,16 @@ class DocumentGenerator {
       ]
     });
 
-    // Add each video as a section
+    // Video sections
     for (let i = 0; i < videos.length; i++) {
-      const video = videos[i];
-      const url = `https://www.youtube.com/watch?v=${video.videoId}`;
+      const v = videos[i];
+      const url = `https://www.youtube.com/watch?v=${v.videoId}`;
       const children = [];
 
-      // Video header
+      // Header
       children.push(
         new Paragraph({
-          text: `Vídeo ${i + 1}: ${video.title}`,
+          text: `Vídeo ${i + 1}: ${v.title}`,
           heading: HeadingLevel.HEADING_2
         })
       );
@@ -127,9 +116,9 @@ class DocumentGenerator {
       children.push(
         new Table({
           rows: [
-            this._row('Duração', video.duration),
-            this._row('Views', String(video.views)),
-            this._row('Likes', String(video.likes)),
+            this._row('Duração', v.duration),
+            this._row('Views', String(v.views)),
+            this._row('Likes', String(v.likes)),
             this._row('Link', url)
           ],
           width: { size: 100, type: 'pct' },
@@ -168,28 +157,27 @@ class DocumentGenerator {
         children.push(new Paragraph({ children: [ new PageBreak() ] }));
       }
 
-      doc.addSection({ properties: {}, children });
+      sections.push({ properties: {}, children });
     }
 
-    // Pack to buffer and return
+    // Instantiate Document with sections
+    const doc = new Document({
+      sections
+    });
+
+    // Pack document
     const buffer = await Packer.toBuffer(doc);
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
     return { blob, filename: 'comprovacao_videos.docx' };
   }
 
-  // Helper to create table rows
+  // Helper: create a table row
   _row(label, value) {
     const { TableRow, TableCell, Paragraph } = this.docx;
     return new TableRow({
       children: [
-        new TableCell({
-          width: { size: 30, type: 'pct' },
-          children: [ new Paragraph({ text: `${label}:`, bold: true }) ]
-        }),
-        new TableCell({
-          width: { size: 70, type: 'pct' },
-          children: [ new Paragraph({ text: value }) ]
-        })
+        new TableCell({ width: { size: 30, type: 'pct' }, children: [ new Paragraph({ text: `${label}:`, bold: true }) ] }),
+        new TableCell({ width: { size: 70, type: 'pct' }, children: [ new Paragraph({ text: value }) ] })
       ]
     });
   }
@@ -203,14 +191,14 @@ class DocumentGenerator {
     return `data:image/png;base64,${screenshot}`;
   }
 
-  // Fallback HTML document
+  // Fallback: HTML document with hqdefault thumbnails
   generateHtmlDocument(videos) {
     let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovação de Dados</title></head><body>';
-    videos.forEach((video, i) => {
-      const thumb = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
-      html += `<h2>Vídeo ${i+1}: ${video.title}</h2>`;
-      html += `<ul><li><strong>Duração:</strong> ${video.duration}</li><li><strong>Views:</strong> ${video.views}</li><li><strong>Likes:</strong> ${video.likes}</li><li><strong>Link:</strong> <a href="https://www.youtube.com/watch?v=${video.videoId}">YouTube</a></li></ul>`;
-      html += `<img src="${thumb}" style="max-width:600px;"><hr>`;
+    videos.forEach((v, i) => {
+      const thumbs = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
+      html += `<h2>Vídeo ${i+1}: ${v.title}</h2>`;
+      html += `<ul><li><strong>Duração:</strong> ${v.duration}</li><li><strong>Views:</strong> ${v.views}</li><li><strong>Likes:</strong> ${v.likes}</li><li><strong>Link:</strong> <a href="https://www.youtube.com/watch?v=${v.videoId}">YouTube</a></li></ul>`;
+      html += `<img src="${thumbs}" style="max-width:600px;"><hr>`;
     });
     html += '</body></html>';
     const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
