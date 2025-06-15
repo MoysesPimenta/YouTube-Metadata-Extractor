@@ -123,7 +123,13 @@ class DocumentGenerator {
   creator: "Lavvi",
   title: "Comprovação de Dados - Playlist YouTube",
   description: "Documento gerado automaticamente com os dados da playlist.",
-  });
+  sections: [
+    {
+      properties: {},
+      children
+    }
+  ]
+});
 
       
 
@@ -178,7 +184,6 @@ for (let i = 0; i < videos.length; i++) {
   );
 }
 
-doc.addSection({ properties: {}, children });
 
 const buffer = await Packer.toBuffer(doc);
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
