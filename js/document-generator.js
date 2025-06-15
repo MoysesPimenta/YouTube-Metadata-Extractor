@@ -70,51 +70,47 @@ class DocumentGenerator {
 
   // DOCX generation using explicit sections array
   async generateWordDocument(videos) {
-    if (!videos || videos.length === 0) {
-      throw new Error('Nenhum dado disponível para gerar o documento.');
-    }
-    if (!this.docx) {
-      console.warn('DOCX library not loaded; falling back to HTML');
-      return this.generateHtmlDocument(videos);
-    }
+    // Always fallback to HTML on any error
+    try {
+      if (!videos || videos.length === 0) {
+        throw new Error('Nenhum dado disponível para gerar o documento.');
+      }
+      if (!this.docx) {
+        console.warn('DOCX library not loaded; falling back to HTML');
+        return this.generateHtmlDocument(videos);
+      }
 
-    const {
-      Document, Packer, Paragraph, Table, TableRow, TableCell,
-      BorderStyle, AlignmentType, HeadingLevel, PageBreak, ImageRun
-    } = this.docx;
+      const {
+        Document, Packer, Paragraph, Table, TableRow, TableCell,
+        BorderStyle, AlignmentType, HeadingLevel, PageBreak, ImageRun
+      } = this.docx;
 
-    // Build an array of sections
-    const sections = [];
+      // Create the document instance
+      const doc = new Document({});
 
-    // Title section
-    sections.push({
-      properties: {},
-      children: [
-        new Paragraph({
-          text: 'Comprovação de Dados - Playlist YouTube',
-          heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER
-        })
-      ]
-    });
+      // Title section
+      doc.addSection({
+        properties: {},
+        children: [
+          new Paragraph({
+            text: 'Comprovação de Dados - Playlist YouTube',
+            heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER
+          })
+        ]
+      });
 
-    // Video sections
-    for (let i = 0; i < videos.length; i++) {
-      const v = videos[i];
-      const url = `https://www.youtube.com/watch?v=${v.videoId}`;
-      const children = [];
+      // Video sections
+      for (let i = 0; i < videos.length; i++) {
+        const v = videos[i];
+        const url = `https://www.youtube.com/watch?v=${v.videoId}`;
+        const children = [];
 
-      // Header
-      children.push(
-        new Paragraph({
-          text: `Vídeo ${i + 1}: ${v.title}`,
-          heading: HeadingLevel.HEADING_2
-        })
-      );
+        // Header
+        children.push(new Paragraph({ text: `Vídeo ${i + 1}: ${v.title}`, heading: HeadingLevel.HEADING_2 }));
 
-      // Metadata table
-      children.push(
-        new Table({
+        // Metadata table
+        children.push(new Table({
           rows: [
             this._row('Duração', v.duration),
             this._row('Views', String(v.views)),
@@ -126,82 +122,32 @@ class DocumentGenerator {
             top: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
             bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
             left: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-            right: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-            insideHorizontal: { style: BorderStyle.NONE },
-            insideVertical: { style: BorderStyle.NONE }
+            right: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' }
           }
-        })
-      );
+        }));
 
-      // Screenshot embed
-      if (this.screenshotToken) {
-        try {
-          const imgData = await this._fetchScreenshot(url);
-          children.push(
-            new Paragraph({
-              children: [
-                new ImageRun({
-                  data: imgData.split(',')[1],
-                  transformation: { width: 600, height: 338 }
-                })
-              ]
-            })
-          );
-        } catch (e) {
-          console.warn('Screenshot fetch failed:', e);
+        // Screenshot embed
+        if (this.screenshotToken) {
+          try {
+            const imgData = await this._fetchScreenshot(url);
+            children.push(new Paragraph({ children: [ new ImageRun({ data: imgData.split(',')[1], transformation: { width: 600, height: 338 } }) ] }));
+          } catch (e) {
+            console.warn('Screenshot fetch failed:', e);
+          }
         }
+
+        // Page break except last
+        if (i < videos.length - 1) children.push(new Paragraph({ children: [ new PageBreak() ] }));
+
+        doc.addSection({ properties: {}, children });
       }
 
-      // Page break except after last
-      if (i < videos.length - 1) {
-        children.push(new Paragraph({ children: [ new PageBreak() ] }));
-      }
-
-      sections.push({ properties: {}, children });
+      // Generate and return DOCX
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      return { blob, filename: 'comprovacao_videos.docx' };
+    } catch (error) {
+      console.error('Error in DOCX generation, falling back:', error);
+      return this.generateHtmlDocument(videos);
     }
-
-    // Instantiate Document with sections
-    const doc = new Document({
-      sections
-    });
-
-    // Pack document
-    const buffer = await Packer.toBuffer(doc);
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    return { blob, filename: 'comprovacao_videos.docx' };
   }
-
-  // Helper: create a table row
-  _row(label, value) {
-    const { TableRow, TableCell, Paragraph } = this.docx;
-    return new TableRow({
-      children: [
-        new TableCell({ width: { size: 30, type: 'pct' }, children: [ new Paragraph({ text: `${label}:`, bold: true }) ] }),
-        new TableCell({ width: { size: 70, type: 'pct' }, children: [ new Paragraph({ text: value }) ] })
-      ]
-    });
-  }
-
-  // Fetch full-page screenshot via API
-  async _fetchScreenshot(url) {
-    const apiUrl = `https://api.screenshotapi.net/screenshot?token=${this.screenshotToken}&url=${encodeURIComponent(url)}&full_page=true`;
-    const res = await fetch(apiUrl);
-    if (!res.ok) throw new Error(`Screenshot API error: ${res.status}`);
-    const { screenshot } = await res.json();
-    return `data:image/png;base64,${screenshot}`;
-  }
-
-  // Fallback: HTML document with hqdefault thumbnails
-  generateHtmlDocument(videos) {
-    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovação de Dados</title></head><body>';
-    videos.forEach((v, i) => {
-      const thumbs = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
-      html += `<h2>Vídeo ${i+1}: ${v.title}</h2>`;
-      html += `<ul><li><strong>Duração:</strong> ${v.duration}</li><li><strong>Views:</strong> ${v.views}</li><li><strong>Likes:</strong> ${v.likes}</li><li><strong>Link:</strong> <a href="https://www.youtube.com/watch?v=${v.videoId}">YouTube</a></li></ul>`;
-      html += `<img src="${thumbs}" style="max-width:600px;"><hr>`;
-    });
-    html += '</body></html>';
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
-    return { blob, filename: 'comprovacao_videos.html' };
-  }
-}
