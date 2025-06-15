@@ -119,6 +119,9 @@ class DocumentGenerator {
 
       const { Document, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, Packer, HeadingLevel } = this.docx;
 
+      
+      
+
       const children = [];
 
 const doc = new Document({
@@ -132,10 +135,6 @@ const doc = new Document({
     }
   ]
 });
-
-      
-
-      const children = [];
 
 for (let i = 0; i < videos.length; i++) {
   const video = videos[i];
@@ -235,3 +234,4 @@ const buffer = await Packer.toBuffer(doc);
     return { blob, filename: 'comprovacao_videos.html' };
   }
 }
+
