@@ -124,18 +124,6 @@ class DocumentGenerator {
 
       const children = [];
 
-const doc = new Document({
-  creator: "Lavvi",
-  title: "Comprovação de Dados - Playlist YouTube",
-  description: "Documento gerado automaticamente com os dados da playlist.",
-  sections: [
-    {
-      properties: {},
-      children
-    }
-  ]
-});
-
 for (let i = 0; i < videos.length; i++) {
   const video = videos[i];
   const screenshot = screenshots[i];
@@ -184,6 +172,18 @@ for (let i = 0; i < videos.length; i++) {
     })
   );
 }
+
+const doc = new Document({
+  creator: "Lavvi",
+  title: "Comprovação de Dados - Playlist YouTube",
+  description: "Documento gerado automaticamente com os dados da playlist.",
+  sections: [
+    {
+      properties: {},
+      children
+    }
+  ]
+});
 
 
 const buffer = await Packer.toBuffer(doc);
@@ -234,4 +234,3 @@ const buffer = await Packer.toBuffer(doc);
     return { blob, filename: 'comprovacao_videos.html' };
   }
 }
-
