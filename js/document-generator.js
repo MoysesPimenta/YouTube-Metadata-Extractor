@@ -16,7 +16,7 @@ class DocumentGenerator {
       this.xlsx = window.XLSX;
 
       try {
-        await this.loadScript('https://cdn.jsdelivr.net/npm/docx@8.4.0/build/index.umd.js');
+        await this.loadScript('https://cdn.jsdelivr.net/npm/docx@7.7.0/build/index.umd.js');
         if (window.docx && window.docx.Packer && typeof window.docx.Packer.toBuffer === 'function') {
           this.docx = window.docx;
           this.docxLoaded = true;
@@ -120,17 +120,25 @@ class DocumentGenerator {
       const { Document, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, Packer, HeadingLevel } = this.docx;
 
       const doc = new Document({
-  creator: "Lavvi",
-  title: "Comprovação de Dados - Playlist YouTube",
-  description: "Documento gerado automaticamente com os dados da playlist."
-});
-
-      doc.addSection({ children: [
+  sections: [
+    {
+      properties: {},
+      children: [
         new Paragraph({
           text: 'Comprovação de Dados - Playlist YouTube',
           heading: HeadingLevel.HEADING_1
         })
-      ]});
+      ]
+    }
+  ]
+});
+
+      doc.sections.push({ properties: {}, children: [
+        new Paragraph({
+          text: 'Comprovação de Dados - Playlist YouTube',
+          heading: HeadingLevel.HEADING_1
+        })
+      ] });
 
       for (let i = 0; i < videos.length; i++) {
         const video = videos[i];
