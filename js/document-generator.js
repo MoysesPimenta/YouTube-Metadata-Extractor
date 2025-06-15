@@ -1,4 +1,4 @@
-// Updated document-generator.js with improved error handling
+// Full document-generator.js with all methods
 class DocumentGenerator {
   constructor() {
     this.xlsx = null;
@@ -48,7 +48,63 @@ class DocumentGenerator {
     });
   }
 
-  // ... [generateExcel and generateCSV remain unchanged] ...
+  generateExcel(videos) {
+    if (!videos || videos.length === 0) {
+      throw new Error('Nenhum dado disponível para gerar a planilha.');
+    }
+
+    try {
+      if (this.xlsx) {
+        const data = videos.map(video => ({
+          'Nome do Episodio': video.title,
+          'Duração': video.duration,
+          'Views': video.views,
+          'Likes': video.likes,
+          'Link': `https://www.youtube.com/watch?v=${video.videoId}`,
+          'Data de Publicacao': new Date(video.publishedDate).toLocaleDateString()
+        }));
+
+        const ws = this.xlsx.utils.json_to_sheet(data);
+        const wb = this.xlsx.utils.book_new();
+        this.xlsx.utils.book_append_sheet(wb, ws, 'Playlist');
+
+        const excelBuffer = this.xlsx.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+        return {
+          blob,
+          filename: 'playlist_data.xlsx'
+        };
+      } else {
+        return this.generateCSV(videos);
+      }
+    } catch (error) {
+      console.error('Error generating Excel:', error);
+      return this.generateCSV(videos);
+    }
+  }
+
+  generateCSV(videos) {
+    let csv = 'Nome do Episodio,Duração,Views,Likes,Link,Data de Publicacao\n';
+    videos.forEach(video => {
+      const row = [
+        `"${video.title.replace(/"/g, '""')}"`,
+        video.duration,
+        video.views,
+        video.likes,
+        `"https://www.youtube.com/watch?v=${video.videoId}"`,
+        new Date(video.publishedDate).toLocaleDateString()
+      ];
+      csv += row.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+    return {
+      blob,
+      filename: 'playlist_data.csv'
+    };
+  }
 
   async generateWordDocument(videos, screenshots) {
     if (!videos || videos.length === 0 || !screenshots || screenshots.length === 0) {
@@ -135,10 +191,6 @@ class DocumentGenerator {
       return this.generateHtmlDocument(videos, screenshots);
     }
   }
-
-  // ... [getImageDataFromUrl and generateHtmlDocument remain unchanged] ...
-} 
-
 
   async getImageDataFromUrl(url) {
     return new Promise((resolve, reject) => {
