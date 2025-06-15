@@ -1,12 +1,12 @@
 // File: js/app.js
 
-// Integration of UI with YouTube Extractor and Document Generator
+// Integration of UI with YouTube Extractor and Document Generator including Screenshot Token
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const playlistForm = document.getElementById('playlist-form');
     const playlistUrlInput = document.getElementById('playlist-url');
     const apiKeyInput = document.getElementById('api-key');
-    const extractBtn = document.getElementById('extract-btn');
+    const screenshotTokenInput = document.getElementById('screenshot-token');
     const progressSection = document.getElementById('progress-section');
     const resultsSection = document.getElementById('results-section');
     const errorSection = document.getElementById('error-section');
@@ -23,210 +23,119 @@ document.addEventListener('DOMContentLoaded', function() {
     const downloadWordBtn = document.getElementById('download-word');
     const tryAgainBtn = document.getElementById('try-again-btn');
     const errorMessage = document.getElementById('error-message');
-    const apiInstructionsLink = document.getElementById('api-instructions-link');
-    const apiModal = document.getElementById('api-modal');
-    const closeModal = document.querySelector('.close-modal');
 
-    // Initialize extractor and document generator
+    // Load stored API keys
+    const storedYtKey = localStorage.getItem('youtube_api_key');
+    if (storedYtKey) apiKeyInput.value = storedYtKey;
+    const storedScreenshotToken = localStorage.getItem('screenshot_api_token');
+    if (storedScreenshotToken) screenshotTokenInput.value = storedScreenshotToken;
+
+    // Save token fields on change
+    apiKeyInput.addEventListener('change', () => {
+        const val = apiKeyInput.value.trim();
+        if (val) localStorage.setItem('youtube_api_key', val);
+        else localStorage.removeItem('youtube_api_key');
+    });
+    screenshotTokenInput.addEventListener('change', () => {
+        const val = screenshotTokenInput.value.trim();
+        if (val) localStorage.setItem('screenshot_api_token', val);
+        else localStorage.removeItem('screenshot_api_token');
+    });
+
+    // Initialize extractor and document generator with token
     const extractor = new YouTubeExtractor();
-    const docGenerator = new DocumentGenerator();
-    
-    // Data storage for extracted information
-    let extractedData = {
-        videos: [],
-        screenshots: [],
-        totalDuration: 0
-    };
+    const docGenerator = new DocumentGenerator(screenshotTokenInput.value.trim());
 
-    // Check for saved API key in localStorage
-    if (localStorage.getItem('youtube_api_key')) {
-        apiKeyInput.value = localStorage.getItem('youtube_api_key');
-    }
+    // Data storage for extracted information
+    let extractedData = { videos: [], totalDuration: 0 };
 
     // Event Listeners
     playlistForm.addEventListener('submit', handleFormSubmit);
     downloadExcelBtn.addEventListener('click', handleExcelDownload);
     downloadWordBtn.addEventListener('click', handleWordDownload);
     tryAgainBtn.addEventListener('click', resetForm);
-    
-    // Modal handling
-    if (apiInstructionsLink && apiModal) {
-        apiInstructionsLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            apiModal.style.display = 'flex';
-        });
-    }
-    
-    if (closeModal && apiModal) {
-        closeModal.addEventListener('click', function() {
-            apiModal.style.display = 'none';
-        });
-    }
-    
-    window.addEventListener('click', function(event) {
-        if (event.target === apiModal) {
-            apiModal.style.display = 'none';
-        }
-    });
 
-    // Form submission handler
     async function handleFormSubmit(e) {
         e.preventDefault();
         const playlistUrl = playlistUrlInput.value.trim();
         const apiKey = apiKeyInput.value.trim();
-        
-        if (!isValidYouTubePlaylistUrl(playlistUrl)) {
+        const screenshotToken = screenshotTokenInput.value.trim();
+
+        if (!/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.*list=[\w-]+/.test(playlistUrl)) {
             showError('Por favor, insira um link válido de playlist do YouTube.');
             return;
         }
 
-        // Save API key to localStorage if provided
-        if (apiKey) {
-            localStorage.setItem('youtube_api_key', apiKey);
-            extractor.setApiKey(apiKey);
-        } else {
-            localStorage.removeItem('youtube_api_key');
-        }
+        extractor.setApiKey(apiKey);
+        docGenerator.setScreenshotToken(screenshotToken);
 
-        // Hide input section, show progress section
         document.querySelector('.input-section').classList.add('hidden');
         progressSection.classList.remove('hidden');
-        
-        // Extract playlist ID
-        const playlistId = extractPlaylistId(playlistUrl);
-        
+
+        const playlistId = (playlistUrl.match(/list=([\w-]+)/) || [])[1];
         try {
-            // Start extraction process
             extractedData = await extractor.processPlaylist(playlistId, updateProgress);
-            
-            // Show results
             showResults();
         } catch (error) {
             console.error('Extraction error:', error);
-            showError(error.message || 'Ocorreu um erro durante a extração dos dados.');
+            showError(error.message || 'Erro durante a extração.');
         }
     }
 
-    // Progress update callback
     function updateProgress(progress) {
         progressBar.style.width = `${progress.progress}%`;
         progressPercentage.textContent = `${progress.progress}%`;
         progressStatus.textContent = progress.status;
-        
-        if (progress.total > 0) {
-            videosTotal.textContent = progress.total;
-            videosProcessed.textContent = progress.processed;
-        }
-        
-        if (progress.currentVideo) {
-            currentVideoTitle.textContent = progress.currentVideo;
-        }
     }
 
-    // Validate YouTube playlist URL
-    function isValidYouTubePlaylistUrl(url) {
-        const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.*list=([a-zA-Z0-9_-]+)/;
-        return regex.test(url);
-    }
-
-    // Extract playlist ID from URL
-    function extractPlaylistId(url) {
-        const regex = /list=([a-zA-Z0-9_-]+)/;
-        const match = url.match(regex);
-        return match ? match[1] : null;
-    }
-
-    // Show results section
     function showResults() {
         progressSection.classList.add('hidden');
         resultsSection.classList.remove('hidden');
-        
-        // Update stats
         totalVideosSpan.textContent = extractedData.videos.length;
-        totalScreenshotsSpan.textContent = extractedData.screenshots.length;
         totalTimeSpan.textContent = formatDuration(extractedData.totalDuration);
     }
 
-    // Show error section
-    function showError(message) {
+    function showError(msg) {
         document.querySelector('.input-section').classList.add('hidden');
         progressSection.classList.add('hidden');
         resultsSection.classList.add('hidden');
         errorSection.classList.remove('hidden');
-        
-        errorMessage.textContent = message;
+        errorMessage.textContent = msg;
     }
 
-    // Reset form to initial state
     function resetForm() {
         document.querySelector('.input-section').classList.remove('hidden');
         progressSection.classList.add('hidden');
         resultsSection.classList.add('hidden');
         errorSection.classList.add('hidden');
-        
-        // Reset progress
         progressBar.style.width = '0%';
         progressPercentage.textContent = '0%';
         progressStatus.textContent = 'Iniciando...';
-        videosProcessed.textContent = '0';
-        videosTotal.textContent = '0';
-        currentVideoTitle.textContent = 'Aguardando...';
-        
-        // Clear data
-        extractedData = {
-            videos: [],
-            screenshots: [],
-            totalDuration: 0
-        };
+        extractedData = { videos: [], totalDuration: 0 };
     }
 
-    // Handle Excel download
     async function handleExcelDownload() {
-        if (extractedData.videos.length === 0) {
-            showError('Nenhum dado disponível para download.');
-            return;
-        }
-        
+        if (!extractedData.videos.length) return showError('Nenhum dado para download.');
         try {
-            progressStatus.textContent = 'Gerando planilha Excel...';
-            
-            // Generate Excel file
             const excelData = docGenerator.generateExcel(extractedData.videos);
-            
-            // Create download link
             downloadFile(excelData.blob, excelData.filename);
-            
-            progressStatus.textContent = 'Planilha Excel baixada com sucesso!';
-        } catch (error) {
-            console.error('Error downloading Excel:', error);
-            progressStatus.textContent = 'Erro ao gerar planilha Excel.';
+        } catch (e) {
+            console.error(e);
+            showError('Erro ao gerar Excel.');
         }
     }
 
-    // Handle Word document download
     async function handleWordDownload() {
-        if (extractedData.videos.length === 0 || extractedData.screenshots.length === 0) {
-            showError('Nenhum dado disponível para download.');
-            return;
-        }
-        
+        if (!extractedData.videos.length) return showError('Nenhum dado para download.');
         try {
-            progressStatus.textContent = 'Gerando documento com capturas...';
-            
-            // Generate Word document
-            const wordData = await docGenerator.generateWordDocument(extractedData.videos, extractedData.screenshots);
-            
-            // Create download link
+            const wordData = await docGenerator.generateWordDocument(extractedData.videos);
             downloadFile(wordData.blob, wordData.filename);
-            
-            progressStatus.textContent = 'Documento baixado com sucesso!';
-        } catch (error) {
-            console.error('Error downloading Word document:', error);
-            progressStatus.textContent = 'Erro ao gerar documento.';
+        } catch (e) {
+            console.error(e);
+            showError('Erro ao gerar documento.');
         }
     }
 
-    // Helper function to download a file
     function downloadFile(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -238,16 +147,10 @@ document.addEventListener('DOMContentLoaded', function() {
         URL.revokeObjectURL(url);
     }
 
-    // Helper function to format duration in seconds to HH:MM:SS
-    function formatDuration(seconds) {
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-        
-        if (hours > 0) {
-            return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        } else {
-            return `${minutes}:${secs.toString().padStart(2, '0')}`;
-        }
+    function formatDuration(sec) {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
     }
 });
