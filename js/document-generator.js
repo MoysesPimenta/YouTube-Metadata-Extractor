@@ -122,8 +122,8 @@ class DocumentGenerator {
       const doc = new Document({
   creator: "Lavvi",
   title: "Comprovação de Dados - Playlist YouTube",
-  description: "Documento gerado automaticamente com os dados da playlist."
-});
+  description: "Documento gerado automaticamente com os dados da playlist.",
+  });
 
       
 
