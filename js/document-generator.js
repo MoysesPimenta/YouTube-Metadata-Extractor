@@ -16,7 +16,7 @@ class DocumentGenerator {
       this.xlsx = window.XLSX;
 
       try {
-        await this.loadScript('https://unpkg.com/docx@9.5.0/build/index.umd.js');
+        await this.loadScript('https://cdn.jsdelivr.net/npm/docx@8.4.0/build/index.umd.js');
         if (window.docx && window.docx.Packer && typeof window.docx.Packer.toBuffer === 'function') {
           this.docx = window.docx;
           this.docxLoaded = true;
