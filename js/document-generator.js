@@ -17,19 +17,16 @@ class DocumentGenerator {
 
   // Load required libraries
   async loadLibraries() {
-    // Load SheetJS for Excel
     if (!window.XLSX) {
       await this.loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
     }
     this.xlsx = window.XLSX;
 
-    // Load docx for Word
     if (!window.docx) {
       await this.loadScript('https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js');
     }
     this.docx = window.docx;
 
-    // Load FileSaver for downloads
     if (!window.saveAs) {
       await this.loadScript('https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js');
     }
@@ -39,15 +36,15 @@ class DocumentGenerator {
   // Helper to inject script tags
   loadScript(src) {
     return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = src;
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
     });
   }
 
-  // Excel generation
+  // Generate Excel file
   generateExcel(videos) {
     if (!videos || videos.length === 0) {
       throw new Error('Nenhum dado disponível para gerar a planilha.');
@@ -68,9 +65,8 @@ class DocumentGenerator {
     return { blob, filename: 'playlist_data.xlsx' };
   }
 
-  // DOCX generation using explicit sections array
+  // Generate Word document (.docx)
   async generateWordDocument(videos) {
-    // Always fallback to HTML on any error
     try {
       if (!videos || videos.length === 0) {
         throw new Error('Nenhum dado disponível para gerar o documento.');
@@ -85,31 +81,25 @@ class DocumentGenerator {
         BorderStyle, AlignmentType, HeadingLevel, PageBreak, ImageRun
       } = this.docx;
 
-      // Create the document instance
-      const doc = new Document({});
+      const doc = new Document();
 
-      // Title section
-      doc.addSection({
-        properties: {},
-        children: [
-          new Paragraph({
-            text: 'Comprovação de Dados - Playlist YouTube',
-            heading: HeadingLevel.HEADING_1,
-            alignment: AlignmentType.CENTER
-          })
-        ]
-      });
+      // Title
+      doc.addSection({ properties: {}, children: [
+        new Paragraph({
+          text: 'Comprovação de Dados - Playlist YouTube',
+          heading: HeadingLevel.HEADING_1,
+          alignment: AlignmentType.CENTER
+        })
+      ]});
 
-      // Video sections
+      // Videos
       for (let i = 0; i < videos.length; i++) {
         const v = videos[i];
         const url = `https://www.youtube.com/watch?v=${v.videoId}`;
         const children = [];
 
-        // Header
         children.push(new Paragraph({ text: `Vídeo ${i + 1}: ${v.title}`, heading: HeadingLevel.HEADING_2 }));
 
-        // Metadata table
         children.push(new Table({
           rows: [
             this._row('Duração', v.duration),
@@ -126,28 +116,63 @@ class DocumentGenerator {
           }
         }));
 
-        // Screenshot embed
         if (this.screenshotToken) {
           try {
             const imgData = await this._fetchScreenshot(url);
-            children.push(new Paragraph({ children: [ new ImageRun({ data: imgData.split(',')[1], transformation: { width: 600, height: 338 } }) ] }));
+            children.push(new Paragraph({ children: [
+              new ImageRun({ data: imgData.split(',')[1], transformation: { width: 600, height: 338 } })
+            ] }));
           } catch (e) {
             console.warn('Screenshot fetch failed:', e);
           }
         }
 
-        // Page break except last
-        if (i < videos.length - 1) children.push(new Paragraph({ children: [ new PageBreak() ] }));
+        if (i < videos.length - 1) {
+          children.push(new Paragraph({ children: [new PageBreak()] }));
+        }
 
         doc.addSection({ properties: {}, children });
       }
 
-      // Generate and return DOCX
       const buffer = await Packer.toBuffer(doc);
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       return { blob, filename: 'comprovacao_videos.docx' };
+
     } catch (error) {
-      console.error('Error in DOCX generation, falling back:', error);
+      console.error('Error generating DOCX, falling back:', error);
       return this.generateHtmlDocument(videos);
     }
   }
+
+  // Fallback HTML export
+  generateHtmlDocument(videos) {
+    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comprovação de Dados</title></head><body>';
+    videos.forEach((v, i) => {
+      const thumb = `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
+      html += `<h2>Vídeo ${i+1}: ${v.title}</h2>`;
+      html += `<ul><li><strong>Duração:</strong> ${v.duration}</li><li><strong>Views:</strong> ${v.views}</li><li><strong>Likes:</strong> ${v.likes}</li><li><strong>Link:</strong> <a href="https://www.youtube.com/watch?v=${v.videoId}">YouTube</a></li></ul>`;
+      html += `<img src="${thumb}" style="max-width:600px;"><hr>`;
+    });
+    html += '</body></html>';
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    return { blob, filename: 'comprovacao_videos.html' };
+  }
+
+  // Table row helper
+  _row(label, value) {
+    const { TableRow, TableCell, Paragraph } = this.docx;
+    return new TableRow({ children: [
+      new TableCell({ width: { size: 30, type: 'pct' }, children: [new Paragraph({ text: `${label}:`, bold: true })] }),
+      new TableCell({ width: { size: 70, type: 'pct' }, children: [new Paragraph({ text: value })] })
+    ] });
+  }
+
+  // Screenshot fetch
+  async _fetchScreenshot(url) {
+    const apiUrl = `https://api.screenshotapi.net/screenshot?token=${this.screenshotToken}&url=${encodeURIComponent(url)}&full_page=true`;
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error(`Screenshot API error: ${res.status}`);
+    const { screenshot } = await res.json();
+    return `data:image/png;base64,${screenshot}`;
+  }
+}
